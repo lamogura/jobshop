@@ -1,6 +1,8 @@
 node_modules/
 temp/
 secrets/
+*.backup
+*.csv
 *.kml
 *.log
 *.ignore
