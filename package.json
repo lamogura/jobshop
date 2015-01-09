@@ -9,9 +9,9 @@
   "author": "Justin Kovalchuk",
   "license": "ISC",
   "dependencies": {
+    "async": "^0.9.0",
+    "chalk": "^0.5.1",
     "coffee-script": "^1.8.0",
-    "request": "^2.51.0",
-    "node-geocoder": "^2.13.1",
-    "chalk": "^0.5.1"
+    "node-geocoder": "^2.13.1"
   }
 }

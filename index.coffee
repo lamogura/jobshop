@@ -1,51 +1,48 @@
-chalk = require 'chalk'
+chalk   = require 'chalk'
+async   = require 'async'
+secrets = require './secrets'
+fs      = require 'fs'
 
-geocoderProvider = "google"
-httpAdapter = "http"
+options =
+  apiKey: secrets.apiKey
+  formatter: 'gpx'
+  # formatter: 'string' # 'gpx', 'string', ...
+  # formatterPattern: "%n, %S, %z, %P, %p, %c, %T, %t"
 
-# optional
-extra =
-  apiKey: "YOUR_API_KEY" # for Mapquest, OpenCage, Google Premier
-  formatter: null # 'gpx', 'string', ...
+geocoder = require("node-geocoder").getGeocoder("google", "https", options)
 
-geocoder = require("node-geocoder").getGeocoder(geocoderProvider, httpAdapter, extra)
+parseLatLon = (gpx) ->
+  # FIXME
+  return [null, null]
 
-# Using callback
-geocoder.geocode "29 champs elysée paris", (err, res) ->
-  console.log res
+jobshop = (csvFile, kmlFile, batchSize=100) ->
+  unless csvFile? and kmlFile? then throw new Error("Must pass csv and kml file path!")
+  unless fs.existsSync(csvFile) then throw new Error("No file exists at path: #{csvFile}")
 
-# Or using Promise
-geocoder.geocode("29 champs elysée paris")
-  .then (res) ->
-    console.log res
-  .catch (err) ->
-    console.log err
+  addresses = parseFile(csvFile)
+  batches = Math.ceil(addresses.length / batchSize)
 
-# ## Advanced usage (only google provider)
-addressInfo = 
-  address: "29 champs elysée"
-  country: "France"
-  zipcode: "75008"
+  kmlStream = fs.createWriteStream(kmlFile)
 
-geocoder.geocode addressInfo, (err, res) ->
-  console.log res
+  async.each [0...batches], (i) ->
+    batch = addresses[(i*batchSize)...((i+1)*batchSize)]
+    geocoder.batchGeocode batch, (values) ->
+      parseLanLon(val) for val in values
+      # write out to kml
 
-# Reverse example
-# Using callback
-geocoder.reverse 45.767, 4.833, (err, res) ->
-  console.log res
+  # geocoder.geocode("4802 N Bend Rd, 44004")
+  #   .then (res) ->
+  #     console.dir res
+  #   .catch (err) ->
+  #     console.log "Error: #{chalk.red(err)}"
 
-# Or using Promise
-geocoder.reverse(45.767, 4.833)
-  .then((res) ->
-    console.log res
-  .catch (err) ->
-    console.log err
+  # geocoder.batchGeocode addresses, (values) ->
+  #   console.log values
 
-# Batch geocode
-addresses = [
-  "13 rue sainte catherine"
-  "another adress"
-]
-geocoder.batchGeocode addresses, (values) ->
-  console.log values
+module.exports = jobshop
+
+if require.main is module
+  args = process.argv.splice(2)
+  file = args[0] or "jobshop.csv"
+  kmlfile = args[1] or "jobshop.kml"
+  jobshop(file, kmlfile, 1)
