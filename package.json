@@ -1,0 +1,17 @@
+{
+  "name": "jobshop",
+  "version": "0.1.0",
+  "description": "geocodes jobshop addresses and spits out a .kml file",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Justin Kovalchuk",
+  "license": "ISC",
+  "dependencies": {
+    "coffee-script": "^1.8.0",
+    "request": "^2.51.0",
+    "node-geocoder": "^2.13.1",
+    "chalk": "^0.5.1"
+  }
+}
