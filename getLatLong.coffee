@@ -33,17 +33,17 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
 
     startAtLineNo = 0
     if fs.existsSync(outCSVFile)
-      existingKml = fs.readFileSync(outCSVFile, 'utf8')
-      startAtLineNo = existingKml.split(delimiter).length-1
+      existingOutputCSV = fs.readFileSync(outCSVFile, 'utf8')
+      startAtLineNo = existingOutputCSV.split(delimiter).length-1
       console.log "Found existing output file: #{outCSVFile} with #{startAtLineNo} lines, resuming..."
 
       lines = lines[startAtLineNo...lines.length]
       console.log "Found #{chalk.cyan(lines.length)} lines remaining in csv source"
 
-      kmlStream = fs.createWriteStream(outCSVFile, flags: 'a')
+      csvOutStream = fs.createWriteStream(outCSVFile, flags: 'a')
     else 
       console.log "Found #{chalk.cyan(lines.length)} lines in csv source"
-      kmlStream = fs.createWriteStream(outCSVFile)
+      csvOutStream = fs.createWriteStream(outCSVFile)
 
     logfile = fs.createWriteStream("geocode.log", flags: 'a')
 
@@ -63,7 +63,7 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
           console.error err
           logfile.write msg + "\n"
           logfile.write err + "\n"
-          kmlStream.write "\n" # leave it blank
+          csvOutStream.write "\n" # leave it blank
           return next()
 
         if hits.length > 0
@@ -75,7 +75,7 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
 
           precision = if (firstHit.city? and hits.length is 1) then "exact" else "rough"
 
-          kmlStream.write([
+          csvOutStream.write([
             company
             address
             firstHit.latitude
@@ -96,7 +96,7 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
 
     async.eachSeries lines, geocodeLine, (err) ->
       console.error err if err
-      kmlStream.end(done)
+      csvOutStream.end(done)
 
 module.exports = getLatLong
 
