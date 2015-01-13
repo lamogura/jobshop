@@ -35,7 +35,7 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
     if fs.existsSync(outCSVFile)
       existingOutputCSV = fs.readFileSync(outCSVFile, 'utf8')
       startAtLineNo = existingOutputCSV.split(delimiter).length-1
-      console.log "Found existing output file: #{outCSVFile} with #{startAtLineNo} lines, resuming..."
+      console.log "Found existing output file: #{chalk.cyan(outCSVFile)} with #{chalk.cyan(startAtLineNo)} lines, resuming..."
 
       lines = lines[startAtLineNo...lines.length]
       console.log "Found #{chalk.cyan(lines.length)} lines remaining in csv source"

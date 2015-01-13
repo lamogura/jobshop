@@ -62,7 +62,7 @@ makeKML = (csvFile, kmlFile, done) ->
 
     lines = data.split(delimiter)
     lineCount = lines.length
-    console.log "Found #{lineCount} entries."
+    console.log "Found #{chalk.cyan(lineCount)} entries."
 
     kmlStream = fs.createWriteStream(kmlFile)
     
