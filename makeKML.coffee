@@ -7,7 +7,7 @@ kmlHeader = """
 <?xml version='1.0' encoding='UTF-8'?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
-    <Style id="sn_open-diamond">
+    <Style id="diamond-exact-address">
       <IconStyle>
         <color>ff00ff00</color>
         <Icon>
@@ -15,13 +15,22 @@ kmlHeader = """
         </Icon>
       </IconStyle>
     </Style>
+    <Style id="diamond-rough-address">
+      <IconStyle>
+        <color>ff00ffff</color>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/open-diamond.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+
 """
 
 kmlNode = """\n
     <Placemark>
       <name>{{company}}</name>
       <description>{{address}}</description>
-      <styleUrl>#sn_open-diamond</styleUrl>
+      <styleUrl>#diamond-{{precision}}-address</styleUrl>
       <Point>
         <coordinates>{{long}},{{lat}},0</coordinates>
       </Point>
@@ -71,10 +80,17 @@ makeKML = (csvFile, kmlFile, done) ->
         line = lines[idx]
         continue unless line.length > 0
         
-        [company, address, lat, long] = line.split(',')
+        [company, address, lat, long, precision] = line.split(',')
         continue unless lat? and long?
 
-        outputLine = kmlNodeTemplate({company: company, address: address, lat: lat, long: long})
+        outputLine = kmlNodeTemplate({
+          company: company
+          address: address
+          lat: lat
+          long: long
+          precision: precision
+        })
+
         if idx is 0 # last one
           kmlStream.write(outputLine, 'utf8', writeFinished)
         else

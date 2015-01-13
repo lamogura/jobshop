@@ -3,11 +3,11 @@ async   = require 'async'
 secrets = require './secrets'
 fs      = require 'fs'
 
-API_LIMIT = 2350 # self imposed to stay under quota/debug
+API_LIMIT = 2490 # self imposed to stay under quota/debug
 
 options =
   apiKey: secrets.apiKey
-  formatter: 'gpx'
+  formatter: null
 
 geocoder = require("node-geocoder").getGeocoder("google", "https", options)
 
@@ -26,6 +26,8 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
       delimiter = '\r'
       console.log "Using delimiter: \\r"
     else console.log "Using delimiter: \\n"
+
+    console.log "Doing max #{chalk.cyan(API_LIMIT)} geocodes."
 
     lines = data.split(delimiter)
 
@@ -53,7 +55,7 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
       [company, address] = line.split(',')
       # console.log "Got: #{company} @ #{address}"
 
-      geocoder.geocode address, (err, res) ->
+      geocoder.geocode address, (err, hits) ->
         apiHitCount += 1
 
         if err
@@ -64,12 +66,26 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
           kmlStream.write "\n" # leave it blank
           return next()
 
-        if m = res.match /(<wpt.*lat="(.*?)".*lon="(.*?)".*wpt\>)/
-          wpt = m[1]
-          lat = m[2]
-          lon = m[3]
-          logfile.write "#{address}, #{wpt}\n"
-          kmlStream.write "#{[company, address, lat, lon].join(',')}\n"
+        if hits.length > 0
+          firstHit = hits[0]
+
+          logfile.write("#{address}: ")
+          logfile.write("(#{hit.latitude}, #{hit.longitude}) ") for hit in hits
+          logfile.write('\n')
+
+          precision = if (firstHit.city? and hits.length is 1) then "exact" else "rough"
+
+          kmlStream.write([
+            company
+            address
+            firstHit.latitude
+            firstHit.longitude
+            precision
+          ].join(',') + '\n')
+
+        else
+          console.log msg ="No hits for address '#{address}'"
+          logfile.write msg + '\n'
 
         if apiHitCount >= API_LIMIT
           next("Exceeded our self-imposed limit of #{API_LIMIT}.")
