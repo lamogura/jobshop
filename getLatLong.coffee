@@ -1,22 +1,25 @@
-chalk   = require 'chalk'
-async   = require 'async'
-secrets = require './secrets'
-fs      = require 'fs'
+chalk        = require 'chalk'
+async        = require 'async'
+fs           = require 'fs'
+NodeGeocoder = require 'node-geocoder'
+require 'dotenv/config'
 
-API_LIMIT = 2490 # self imposed to stay under quota/debug
+API_LIMIT = 5000 # self imposed to stay under quota/debug
 
 options =
-  apiKey: secrets.apiKey
+  provider: 'google'
+  apiKey: process.env.GOOGLE_GEO_API_KEY
+  httpAdapter: 'https'
   formatter: null
 
-geocoder = require("node-geocoder").getGeocoder("google", "https", options)
+geocoder = NodeGeocoder(options)
 
 getLatLong = (inCSVFile, outCSVFile, done) ->
   unless inCSVFile? and outCSVFile? then throw new Error("Must pass an input and output csv file path!")
   unless fs.existsSync(inCSVFile) then throw new Error("No file exists at path: #{inCSVFile}")
 
   fs.readFile inCSVFile, 'utf8', (err, data) ->
-    throw err if err?
+    throw err if err?cp
 
     delimiter = '\n'
     if data.indexOf('\r\n') > -1
@@ -41,7 +44,7 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
       console.log "Found #{chalk.cyan(lines.length)} lines remaining in csv source"
 
       csvOutStream = fs.createWriteStream(outCSVFile, flags: 'a')
-    else 
+    else
       console.log "Found #{chalk.cyan(lines.length)} lines in csv source"
       csvOutStream = fs.createWriteStream(outCSVFile)
 
@@ -90,7 +93,7 @@ getLatLong = (inCSVFile, outCSVFile, done) ->
         if apiHitCount >= API_LIMIT
           next("Exceeded our self-imposed limit of #{API_LIMIT}.")
         else
-          waitTime = 250
+          waitTime = 20
           # console.log "Time for a #{waitTime}ms timeout."
           setTimeout(next, waitTime)
 
